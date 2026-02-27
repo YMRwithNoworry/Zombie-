@@ -36,11 +36,10 @@ public class ZombieCrossbowGoal extends Goal {
     
     private boolean isCharging = false;
     private int chargeTime = 0;
-    private static final int CHARGE_DURATION = 25;
+    private static final int CHARGE_DURATION = 20;
     
     public ZombieCrossbowGoal(Zombie zombie) {
         this.zombie = zombie;
-        this.setFlags(EnumSet.of(Flag.LOOK));
     }
     
     @Override
@@ -61,7 +60,6 @@ public class ZombieCrossbowGoal extends Goal {
             return false;
         }
         
-        switchToCrossbow();
         return true;
     }
     
@@ -74,6 +72,7 @@ public class ZombieCrossbowGoal extends Goal {
         double distance = zombie.distanceToSqr(zombie.getTarget());
         
         if (distance < MELEE_RANGE * MELEE_RANGE) {
+            switchToMeleeWeapon();
             return false;
         }
         
@@ -82,11 +81,12 @@ public class ZombieCrossbowGoal extends Goal {
     
     @Override
     public void start() {
-        cooldown = 20;
-        fishingRodCooldown = 30;
-        tntCooldown = 60;
+        cooldown = 0;
+        fishingRodCooldown = 0;
+        tntCooldown = 0;
         isCharging = false;
         chargeTime = 0;
+        switchToCrossbow();
     }
     
     @Override
@@ -121,24 +121,21 @@ public class ZombieCrossbowGoal extends Goal {
         }
         
         if (level >= 6 && distance < TNT_RANGE * TNT_RANGE && tntCooldown <= 0) {
-            double tntChance = level >= 9 ? 0.3 : 0.1;
-            if (random.nextDouble() < tntChance) {
-                throwTNT();
-            } else {
-                tntCooldown = TNT_COOLDOWN / 2;
-            }
+            throwTNT();
         }
         
-        if (isCharging) {
-            chargeTime++;
-            if (chargeTime >= CHARGE_DURATION) {
-                shootCrossbow(target);
-                isCharging = false;
-                chargeTime = 0;
-                cooldown = COOLDOWN_TICKS;
+        if (distance < ATTACK_RANGE * ATTACK_RANGE) {
+            if (isCharging) {
+                chargeTime++;
+                if (chargeTime >= CHARGE_DURATION) {
+                    shootCrossbow(target);
+                    isCharging = false;
+                    chargeTime = 0;
+                    cooldown = COOLDOWN_TICKS;
+                }
+            } else if (cooldown <= 0) {
+                startCharging();
             }
-        } else if (cooldown <= 0 && distance < ATTACK_RANGE * ATTACK_RANGE) {
-            startCharging();
         }
     }
     

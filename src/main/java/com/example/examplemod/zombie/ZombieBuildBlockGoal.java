@@ -51,6 +51,10 @@ public class ZombieBuildBlockGoal extends Goal {
             return false;
         }
         
+        if (heightDiff < 0) {
+            return false;
+        }
+        
         BlockPos belowFeet = zombie.blockPosition().below();
         BlockState belowState = zombie.level().getBlockState(belowFeet);
         if (belowState.isAir() || belowState.canBeReplaced()) {
@@ -68,7 +72,15 @@ public class ZombieBuildBlockGoal extends Goal {
         double zombieY = zombie.getY();
         double heightDiff = targetY - zombieY;
         
-        return heightDiff >= 1.0;
+        if (heightDiff < 1.0) {
+            return false;
+        }
+        
+        if (heightDiff < 0) {
+            return false;
+        }
+        
+        return true;
     }
     
     @Override
