@@ -35,7 +35,7 @@ public class ZombieEnhancer {
     private static final UUID ARMOR_MODIFIER_UUID = UUID.fromString("d5d5d5d5-0000-0000-0000-000000000004");
     private static final UUID FOLLOW_RANGE_UUID = UUID.fromString("d5d5d5d5-0000-0000-0000-000000000005");
     
-    private static final double TARGET_FOLLOW_RANGE = 128.0;
+    private static final double TARGET_FOLLOW_RANGE = 512.0;
     private static final int DEFAULT_ENHANCE_INTERVAL = 10;
     
     @SubscribeEvent(priority = EventPriority.HIGHEST)

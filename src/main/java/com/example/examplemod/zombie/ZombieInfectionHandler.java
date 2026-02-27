@@ -87,13 +87,13 @@ public class ZombieInfectionHandler {
     }
     
     public static void addTargetGoals(Zombie zombie) {
-        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Player.class, true));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, true));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, true));
-        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, Villager.class, true));
-        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, true));
-        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, Animal.class, true));
-        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, true));
-        zombie.targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.monster.Monster.class, true, false));
+        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Player.class, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, false));
+        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, Villager.class, false));
+        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, false));
+        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, Animal.class, false));
+        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, false));
+        zombie.targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.monster.Monster.class, false, false));
     }
 }
