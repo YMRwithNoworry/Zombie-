@@ -229,7 +229,11 @@ public class ZombieBreakBlockGoal extends Goal {
         
         baseTime = (int)(baseTime / ZombieEnhanceConfig.blockBreakSpeed);
         
-        return Math.max(baseTime, 10);
+        int hasteLevel = 5;
+        float hasteMultiplier = 1.0f + hasteLevel * 0.2f;
+        baseTime = (int)(baseTime / hasteMultiplier);
+        
+        return Math.max(baseTime, 2);
     }
     
     private void storeAndEquipPickaxe() {

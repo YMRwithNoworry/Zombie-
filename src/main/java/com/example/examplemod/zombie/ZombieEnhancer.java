@@ -6,6 +6,8 @@ import com.example.examplemod.core.DayTracker;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -145,6 +147,8 @@ public class ZombieEnhancer {
     
     private static void applyAbilityEnhancements(Zombie zombie, int level) {
         LOGGER.info("Applying abilities for level: {}", level);
+        
+        zombie.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, Integer.MAX_VALUE, 4, false, false));
         
         if (level >= 1 && ZombieEnhanceConfig.enableBlockBreaking) {
             zombie.goalSelector.addGoal(2, new ZombieBreakBlockGoal(zombie));
