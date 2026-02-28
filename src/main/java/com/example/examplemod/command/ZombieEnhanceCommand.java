@@ -3,6 +3,7 @@ package com.example.examplemod.command;
 import com.example.examplemod.ExampleMod;
 import com.example.examplemod.config.ZombieEnhanceConfig;
 import com.example.examplemod.core.DayTracker;
+import com.example.examplemod.zombie.ZombieEnhancer;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -167,25 +168,13 @@ public class ZombieEnhanceCommand {
         CommandSourceStack source = context.getSource();
         int levelValue = IntegerArgumentType.getInteger(context, "level");
         
+        ZombieEnhancer.setOverrideLevel(levelValue);
+        
         Level level = source.getLevel();
-        if (!(level instanceof ServerLevel)) {
-            source.sendFailure(Component.literal("此命令只能在服务器端执行"));
-            return 0;
-        }
-        
         DayTracker tracker = DayTracker.get(level);
-        if (tracker == null) {
-            source.sendFailure(Component.literal("无法获取天数追踪器"));
-            return 0;
-        }
+        long currentDay = tracker != null ? tracker.getCurrentDay() : 0;
         
-        int targetDay = levelValue * ZombieEnhanceConfig.enhanceInterval;
-        long newTicks = (long) targetDay * 24000L;
-        
-        tracker.setTotalTicks(newTicks);
-        tracker.setDirty();
-        
-        source.sendSuccess(() -> Component.literal("§a已将强化阶段设置为: §c" + levelValue + " §a(对应天数: §f" + (targetDay + 1) + "§a)"), true);
+        source.sendSuccess(() -> Component.literal("§a已将强化等级设置为：§c" + levelValue + " §a(当前天数：§f" + (currentDay + 1) + "§a)"), true);
         
         return 1;
     }

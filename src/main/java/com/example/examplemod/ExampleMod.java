@@ -2,6 +2,7 @@ package com.example.examplemod;
 
 import com.example.examplemod.config.ZombieEnhanceConfig;
 import com.example.examplemod.network.NetworkHandler;
+import com.example.examplemod.zombie.ModEffects;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
@@ -65,7 +66,9 @@ public class ExampleMod {
         MinecraftForge.EVENT_BUS.register(this);
 
         modEventBus.addListener(this::addCreative);
-
+        
+        ModEffects.register(modEventBus);
+        
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "examplemod-common.toml");
         context.registerConfig(ModConfig.Type.COMMON, ZombieEnhanceConfig.SPEC, "zombie-enhance.toml");
     }

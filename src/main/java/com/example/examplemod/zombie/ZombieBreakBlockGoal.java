@@ -2,6 +2,7 @@ package com.example.examplemod.zombie;
 
 import com.example.examplemod.config.ZombieEnhanceConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -11,12 +12,13 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
 
-import java.util.EnumSet;
+import java.util.*;
 
 public class ZombieBreakBlockGoal extends Goal {
     
@@ -26,7 +28,7 @@ public class ZombieBreakBlockGoal extends Goal {
     private int breakTime;
     private ItemStack originalMainHand;
     private boolean hasStoredOriginalItem;
-    private int checkPathCooldown;
+    private int recheckCooldown;
     
     public ZombieBreakBlockGoal(Zombie zombie) {
         this.zombie = zombie;
@@ -44,29 +46,29 @@ public class ZombieBreakBlockGoal extends Goal {
             return false;
         }
         
-        if (zombie.getTarget() == null) {
+        if (zombie.getTarget() == null || !zombie.getTarget().isAlive()) {
             return false;
         }
         
-        if (hasPathToTarget()) {
+        if (canReachTargetDirectly()) {
             return false;
         }
         
-        targetBlock = findBlockToBreak();
+        targetBlock = findBlockingBlock();
         return targetBlock != null;
     }
     
     @Override
     public boolean canContinueToUse() {
+        if (zombie.getTarget() == null || !zombie.getTarget().isAlive()) {
+            return false;
+        }
+        
         if (targetBlock == null) {
             return false;
         }
         
-        if (zombie.getTarget() == null) {
-            return false;
-        }
-        
-        if (hasPathToTarget()) {
+        if (canReachTargetDirectly()) {
             return false;
         }
         
@@ -75,34 +77,46 @@ public class ZombieBreakBlockGoal extends Goal {
             return false;
         }
         
-        return zombie.distanceToSqr(targetBlock.getX(), targetBlock.getY(), targetBlock.getZ()) < 9.0;
+        return true;
     }
     
-    private boolean hasPathToTarget() {
-        if (zombie.getTarget() == null) return false;
+    private boolean canReachTargetDirectly() {
+        if (zombie.getTarget() == null) return true;
         
-        Path path = zombie.getNavigation().getPath();
-        if (path != null && !path.isDone()) {
+        Vec3 targetPos = zombie.getTarget().position();
+        Path path = zombie.getNavigation().createPath(targetPos.x, targetPos.y, targetPos.z, 0);
+        
+        if (path == null) {
+            return false;
+        }
+        
+        if (path.isDone()) {
             return true;
         }
         
-        Vec3 targetPos = zombie.getTarget().position();
-        Path newPath = zombie.getNavigation().createPath(targetPos.x, targetPos.y, targetPos.z, 0);
-        return newPath != null;
+        int pathLength = path.getNodeCount();
+        if (pathLength > 100) {
+            return false;
+        }
+        
+        double distToTarget = zombie.distanceToSqr(zombie.getTarget());
+        if (distToTarget < 9.0) {
+            return true;
+        }
+        
+        return false;
     }
     
     @Override
     public void start() {
         breakProgress = 0;
         hasStoredOriginalItem = false;
-        checkPathCooldown = 0;
+        recheckCooldown = 0;
         
         if (targetBlock != null) {
             BlockState state = zombie.level().getBlockState(targetBlock);
             breakTime = calculateBreakTime(state);
-            
             storeAndEquipPickaxe();
-            
             zombie.getNavigation().stop();
         }
     }
@@ -110,20 +124,28 @@ public class ZombieBreakBlockGoal extends Goal {
     @Override
     public void stop() {
         restoreOriginalItem();
-        breakProgress = 0;
         targetBlock = null;
+        breakProgress = 0;
     }
     
     @Override
     public void tick() {
         if (targetBlock == null) {
+            targetBlock = findBlockingBlock();
+            if (targetBlock != null) {
+                BlockState state = zombie.level().getBlockState(targetBlock);
+                breakTime = calculateBreakTime(state);
+                storeAndEquipPickaxe();
+            }
             return;
         }
         
-        checkPathCooldown++;
-        if (checkPathCooldown >= 20 && hasPathToTarget()) {
-            stop();
-            return;
+        recheckCooldown++;
+        if (recheckCooldown >= 30) {
+            recheckCooldown = 0;
+            if (canReachTargetDirectly()) {
+                return;
+            }
         }
         
         zombie.getLookControl().setLookAt(
@@ -136,13 +158,12 @@ public class ZombieBreakBlockGoal extends Goal {
         BlockState state = level.getBlockState(targetBlock);
         
         if (state.isAir()) {
-            restoreOriginalItem();
-            if (!hasPathToTarget()) {
-                targetBlock = findBlockToBreak();
-            } else {
-                targetBlock = null;
+            targetBlock = findBlockingBlock();
+            if (targetBlock != null) {
+                state = level.getBlockState(targetBlock);
+                breakTime = calculateBreakTime(state);
+                storeAndEquipPickaxe();
             }
-            breakProgress = 0;
             return;
         }
         
@@ -151,12 +172,11 @@ public class ZombieBreakBlockGoal extends Goal {
         
         if (instantBreak) {
             breakBlock(level, targetBlock, state);
-            restoreOriginalItem();
-            breakProgress = 0;
-            if (!hasPathToTarget()) {
-                targetBlock = findBlockToBreak();
-            } else {
-                targetBlock = null;
+            targetBlock = findBlockingBlock();
+            if (targetBlock != null) {
+                state = level.getBlockState(targetBlock);
+                breakTime = calculateBreakTime(state);
+                storeAndEquipPickaxe();
             }
             return;
         }
@@ -175,72 +195,115 @@ public class ZombieBreakBlockGoal extends Goal {
         
         if (breakProgress >= breakTime) {
             breakBlock(level, targetBlock, state);
-            restoreOriginalItem();
-            breakProgress = 0;
-            if (!hasPathToTarget()) {
-                targetBlock = findBlockToBreak();
-            } else {
-                targetBlock = null;
+            targetBlock = findBlockingBlock();
+            if (targetBlock != null) {
+                state = level.getBlockState(targetBlock);
+                breakTime = calculateBreakTime(state);
+                storeAndEquipPickaxe();
             }
         }
     }
     
-    private BlockPos findBlockToBreak() {
-        if (zombie.getTarget() == null) {
-            return null;
+    private BlockPos findBlockingBlock() {
+        if (zombie.getTarget() == null) return null;
+        
+        Vec3 zombiePos = zombie.position();
+        Vec3 targetPos = zombie.getTarget().position();
+        
+        BlockPos blockingOnPath = findBlockOnPath(zombiePos, targetPos);
+        if (blockingOnPath != null) {
+            return blockingOnPath;
         }
         
-        Vec3 targetPos = zombie.getTarget().position();
-        BlockPos zombiePos = zombie.blockPosition();
-        BlockPos targetBlockPos = new BlockPos((int)targetPos.x, (int)targetPos.y, (int)targetPos.z);
+        BlockPos blockingLOS = findBlockBlockingLineOfSight(zombiePos, targetPos);
+        if (blockingLOS != null) {
+            return blockingLOS;
+        }
         
-        BlockPos bestPos = null;
-        double bestScore = Double.MAX_VALUE;
+        return null;
+    }
+    
+    private BlockPos findBlockOnPath(Vec3 start, Vec3 end) {
+        Vec3 direction = end.subtract(start).normalize();
+        double distance = start.distanceTo(end);
         
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = 0; dy <= 2; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue;
-                    
-                    BlockPos checkPos = zombiePos.offset(dx, dy, dz);
-                    BlockState state = zombie.level().getBlockState(checkPos);
-                    
-                    if (!state.isAir() && !state.getFluidState().isSource()) {
-                        float hardness = state.getDestroySpeed(zombie.level(), checkPos);
-                        if (hardness >= 0 && hardness < 50) {
-                            double distToTarget = checkPos.distSqr(targetBlockPos);
-                            if (distToTarget < bestScore) {
-                                bestScore = distToTarget;
-                                bestPos = checkPos;
-                            }
-                        }
-                    }
-                }
+        for (double d = 1.0; d < Math.min(distance, 8.0); d += 0.5) {
+            Vec3 checkPoint = start.add(direction.scale(d));
+            BlockPos checkPos = new BlockPos(
+                (int)Math.floor(checkPoint.x), 
+                (int)Math.floor(checkPoint.y), 
+                (int)Math.floor(checkPoint.z)
+            );
+            
+            BlockState state = zombie.level().getBlockState(checkPos);
+            if (isBreakableBlock(state, checkPos)) {
+                return checkPos;
+            }
+            
+            BlockPos abovePos = checkPos.above();
+            state = zombie.level().getBlockState(abovePos);
+            if (isBreakableBlock(state, abovePos)) {
+                return abovePos;
             }
         }
         
-        return bestPos;
+        return null;
+    }
+    
+    private BlockPos findBlockBlockingLineOfSight(Vec3 start, Vec3 end) {
+        Vec3 eyeStart = zombie.getEyePosition();
+        Vec3 eyeEnd = zombie.getTarget().getEyePosition();
+        
+        HitResult hit = zombie.level().clip(new ClipContext(
+            eyeStart, eyeEnd, 
+            ClipContext.Block.COLLIDER, 
+            ClipContext.Fluid.NONE, 
+            zombie
+        ));
+        
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = BlockPos.containing(hit.getLocation());
+            BlockState state = zombie.level().getBlockState(hitPos);
+            if (isBreakableBlock(state, hitPos)) {
+                return hitPos;
+            }
+        }
+        
+        return null;
+    }
+    
+    private boolean isBreakableBlock(BlockState state, BlockPos pos) {
+        if (state.isAir()) return false;
+        if (state.getFluidState().isSource()) return false;
+        
+        float hardness = state.getDestroySpeed(zombie.level(), pos);
+        if (hardness < 0) return false;
+        if (hardness > 50) return false;
+        
+        return true;
     }
     
     private int calculateBreakTime(BlockState state) {
         float hardness = state.getDestroySpeed(zombie.level(), targetBlock);
         
-        int baseTime = (int)(hardness * 30);
+        int baseTime = (int)(hardness * 5);
         
         baseTime = (int)(baseTime / ZombieEnhanceConfig.blockBreakSpeed);
         
-        int hasteLevel = 5;
-        float hasteMultiplier = 1.0f + hasteLevel * 0.2f;
-        baseTime = (int)(baseTime / hasteMultiplier);
+        int enhanceLevel = ZombieEnhancer.getEnhanceLevel(zombie);
+        float levelMultiplier = 1.0f + enhanceLevel * 0.5f;
+        baseTime = (int)(baseTime / levelMultiplier);
         
-        return Math.max(baseTime, 2);
+        return Math.max(baseTime, 1);
     }
     
     private void storeAndEquipPickaxe() {
-        originalMainHand = zombie.getItemBySlot(EquipmentSlot.MAINHAND).copy();
-        hasStoredOriginalItem = true;
+        if (!hasStoredOriginalItem) {
+            originalMainHand = zombie.getItemBySlot(EquipmentSlot.MAINHAND).copy();
+            hasStoredOriginalItem = true;
+        }
         
-        zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
+        zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_PICKAXE));
     }
     
     private void restoreOriginalItem() {
@@ -258,8 +321,6 @@ public class ZombieBreakBlockGoal extends Goal {
         if (level instanceof ServerLevel) {
             level.playSound(null, pos, state.getSoundType().getBreakSound(), 
                 SoundSource.HOSTILE, 1.0F, 1.0F);
-            
-            Block.dropResources(state, level, pos, null, zombie, zombie.getMainHandItem());
             
             level.destroyBlock(pos, false);
             

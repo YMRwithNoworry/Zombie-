@@ -31,6 +31,8 @@ public class ZombieEnhancer {
     private static final String ENHANCED_TAG = "ZombieEnhanced";
     private static final String ENHANCE_LEVEL_TAG = "EnhanceLevel";
     
+    private static int overrideLevel = -1;
+    
     private static final UUID HEALTH_MODIFIER_UUID = UUID.fromString("d5d5d5d5-0000-0000-0000-000000000001");
     private static final UUID ATTACK_MODIFIER_UUID = UUID.fromString("d5d5d5d5-0000-0000-0000-000000000002");
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("d5d5d5d5-0000-0000-0000-000000000003");
@@ -151,7 +153,7 @@ public class ZombieEnhancer {
         zombie.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, Integer.MAX_VALUE, 4, false, false));
         
         if (level >= 1 && ZombieEnhanceConfig.enableBlockBreaking) {
-            zombie.goalSelector.addGoal(2, new ZombieBreakBlockGoal(zombie));
+            zombie.goalSelector.addGoal(0, new ZombieBreakBlockGoal(zombie));
             LOGGER.info("Added ZombieBreakBlockGoal");
         }
         
@@ -161,14 +163,14 @@ public class ZombieEnhancer {
         }
         
         if (level >= 3) {
-            zombie.goalSelector.addGoal(2, new ZombieTNTGoal(zombie));
+            zombie.goalSelector.addGoal(4, new ZombieTNTGoal(zombie));
             LOGGER.info("Added ZombieTNTGoal");
         }
         
         if (level >= 4) {
             zombie.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.SHIELD));
             zombie.setDropChance(EquipmentSlot.OFFHAND, 0.0F);
-            zombie.goalSelector.addGoal(1, new ZombieCombatGoal(zombie));
+            zombie.goalSelector.addGoal(5, new ZombieCombatGoal(zombie));
             LOGGER.info("Equipped shield and added ZombieCombatGoal");
         }
         
@@ -180,23 +182,38 @@ public class ZombieEnhancer {
         }
         
         if (level >= 6) {
-            zombie.goalSelector.addGoal(2, new ZombieEnderPearlGoal(zombie));
+            zombie.goalSelector.addGoal(6, new ZombieEnderPearlGoal(zombie));
             LOGGER.info("Added ZombieEnderPearlGoal (crossbow now uses fireworks)");
         }
         
         if (level >= 8) {
-            zombie.goalSelector.addGoal(1, new ZombieHealGoal(zombie));
+            zombie.goalSelector.addGoal(7, new ZombieHealGoal(zombie));
             LOGGER.info("Added ZombieHealGoal");
         }
         
         if (level >= 10) {
-            zombie.goalSelector.addGoal(0, new ZombieUltimateGoal(zombie));
+            zombie.goalSelector.addGoal(8, new ZombieUltimateGoal(zombie));
             LOGGER.info("Added ZombieUltimateGoal");
         }
     }
     
     public static int getEnhanceLevel(Zombie zombie) {
+        if (overrideLevel >= 0) {
+            return overrideLevel;
+        }
         return zombie.getPersistentData().getInt(ENHANCE_LEVEL_TAG);
+    }
+    
+    public static void setOverrideLevel(int level) {
+        overrideLevel = level;
+    }
+    
+    public static int getOverrideLevel() {
+        return overrideLevel;
+    }
+    
+    public static void resetOverrideLevel() {
+        overrideLevel = -1;
     }
     
     public static boolean canBreakBlocks(Zombie zombie) {

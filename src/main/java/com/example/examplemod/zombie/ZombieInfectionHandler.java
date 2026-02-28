@@ -19,12 +19,17 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(modid = ExampleMod.MODID)
 public class ZombieInfectionHandler {
     
     private static final UUID HEALTH_MODIFIER_UUID = UUID.fromString("d5d5d5d5-1111-0000-0000-000000000001");
     private static final UUID ATTACK_MODIFIER_UUID = UUID.fromString("d5d5d5d5-1111-0000-0000-000000000002");
+    
+    private static final Predicate<LivingEntity> NOT_ZOMBIE_PREDICATE = (entity) -> {
+        return !(entity instanceof Zombie);
+    };
     
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -87,13 +92,20 @@ public class ZombieInfectionHandler {
     }
     
     public static void addTargetGoals(Zombie zombie) {
-        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Player.class, false));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, false));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, false));
-        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, Villager.class, false));
-        zombie.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, false));
-        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, Animal.class, false));
-        zombie.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, false));
-        zombie.targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.monster.Monster.class, false, false));
+        zombie.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(zombie, Player.class, false));
+        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, false));
+        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, false));
+        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Villager.class, false));
+        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, Animal.class, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, false));
+        zombie.targetSelector.addGoal(5, new NonZombieLivingTargetGoal(zombie));
+    }
+    
+    private static class NonZombieLivingTargetGoal extends NearestAttackableTargetGoal<LivingEntity> {
+        
+        public NonZombieLivingTargetGoal(Zombie zombie) {
+            super(zombie, LivingEntity.class, 10, true, false, NOT_ZOMBIE_PREDICATE);
+        }
     }
 }
