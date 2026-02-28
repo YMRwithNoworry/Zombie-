@@ -92,20 +92,20 @@ public class ZombieInfectionHandler {
     }
     
     public static void addTargetGoals(Zombie zombie) {
-        zombie.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(zombie, Player.class, false));
-        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, false));
-        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, false));
-        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Villager.class, false));
-        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, false));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, Animal.class, false));
-        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, false));
+        zombie.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(zombie, Player.class, true, false));
+        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.IronGolem.class, true, false));
+        zombie.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(zombie, net.minecraft.world.entity.animal.SnowGolem.class, true, false));
+        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, Villager.class, true, false));
+        zombie.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(zombie, AbstractVillager.class, true, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, Animal.class, true, false));
+        zombie.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(zombie, WaterAnimal.class, true, false));
         zombie.targetSelector.addGoal(5, new NonZombieLivingTargetGoal(zombie));
     }
     
     private static class NonZombieLivingTargetGoal extends NearestAttackableTargetGoal<LivingEntity> {
         
         public NonZombieLivingTargetGoal(Zombie zombie) {
-            super(zombie, LivingEntity.class, 10, true, false, NOT_ZOMBIE_PREDICATE);
+            super(zombie, LivingEntity.class, 64, true, false, NOT_ZOMBIE_PREDICATE);
         }
     }
 }
