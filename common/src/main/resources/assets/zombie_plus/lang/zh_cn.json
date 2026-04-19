@@ -1,0 +1,16 @@
+{
+  "hud.zombie_plus.day": "第 %d 天 / 共 %d 天",
+  "hud.zombie_plus.stage": "进化阶段: %d",
+  "screen.zombie_plus.config.title": "僵尸进化 配置",
+  "screen.zombie_plus.config.total_days": "总天数",
+  "screen.zombie_plus.config.total_days_label": "总天数:",
+  "screen.zombie_plus.config.save": "保存",
+  "screen.zombie_plus.config.cancel": "取消",
+  "key.categories.zombie_plus": "僵尸进化",
+  "key.zombie_plus.config": "打开配置",
+  "command.zombie_plus.set_current_day": "当前天数已设置为 %d",
+  "command.zombie_plus.set_total_days": "总天数已设置为 %d",
+  "command.zombie_plus.status": "当前天数: %d / %d | 进化阶段: %d",
+  "effect.zombie_plus.corrosion": "腐蚀",
+  "effect.zombie_plus.corrosion.description": "盔甲和武器耐久快速下降"
+}

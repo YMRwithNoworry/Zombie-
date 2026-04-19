@@ -1,0 +1,16 @@
+{
+  "hud.zombie_plus.day": "Day %d / %d",
+  "hud.zombie_plus.stage": "Evolution Stage: %d",
+  "screen.zombie_plus.config.title": "Zombie Plus Config",
+  "screen.zombie_plus.config.total_days": "Total Days",
+  "screen.zombie_plus.config.total_days_label": "Total Days:",
+  "screen.zombie_plus.config.save": "Save",
+  "screen.zombie_plus.config.cancel": "Cancel",
+  "key.categories.zombie_plus": "Zombie Plus",
+  "key.zombie_plus.config": "Open Config",
+  "command.zombie_plus.set_current_day": "Current day set to %d",
+  "command.zombie_plus.set_total_days": "Total days set to %d",
+  "command.zombie_plus.status": "Current Day: %d / %d | Stage: %d",
+  "effect.zombie_plus.corrosion": "Corrosion",
+  "effect.zombie_plus.corrosion.description": "Armor and weapon durability decreases rapidly"
+}

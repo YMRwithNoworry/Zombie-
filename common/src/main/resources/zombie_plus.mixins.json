@@ -6,6 +6,9 @@
   "client": [
   ],
   "mixins": [
+    "NaturalSpawnerMixin",
+    "ZombieMixin",
+    "ZombieAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
